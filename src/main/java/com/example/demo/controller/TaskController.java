@@ -1,0 +1,58 @@
+package com.example.demo.controller;
+
+import com.example.demo.dto.TaskDto;
+import com.example.demo.model.Task;
+import com.example.demo.repository.ITaskRepository;
+import com.example.demo.service.TaskService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
+
+@RestController
+@RequestMapping("api/task")
+@RequiredArgsConstructor
+public class TaskController {
+    @Autowired
+    private TaskService taskService;
+
+    @PostMapping
+    public ResponseEntity<Task> createTask(@RequestBody TaskDto task) {
+        return new ResponseEntity<>(taskService.createTask(task), HttpStatus.CREATED);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Task> updateTask(@PathVariable UUID id, @RequestBody Task task) {
+        return ResponseEntity.ok(taskService.updateTask(id, task));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteTask(@PathVariable UUID id) {
+        taskService.deleteTask(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Task>> getAllTasks(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Integer status,
+            @RequestParam(required = false) String sortBy) {
+        return ResponseEntity.ok(taskService.getAllTasks(keyword, status, sortBy));
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<Task> updateStatus(@PathVariable UUID id, @RequestParam Integer status) {
+        return ResponseEntity.ok(taskService.updateStatus(id, status));
+    }
+
+    // Auto update trạng thái
+    @PostMapping("/update-status")
+    public ResponseEntity<Void> autoUpdateStatus() {
+        taskService.autoUpdateStatus();
+        return ResponseEntity.ok().build();
+    }
+}
