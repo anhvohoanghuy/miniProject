@@ -1,5 +1,6 @@
 package com.example.demo.controller;
 
+import com.example.demo.model.AuthResponse;
 import com.example.demo.model.User;
 import com.example.demo.model.UserClaim;
 import com.example.demo.service.JwtUtil;
@@ -8,10 +9,13 @@ import com.example.demo.view_model.LoginVM;
 import com.example.demo.repository.IUserClaimRepository;
 import com.example.demo.repository.IUserRepository;
 import com.example.demo.view_model.RegisterVM;
+import io.jsonwebtoken.Claims;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -34,7 +38,7 @@ public class AuthController {
     @Autowired
     private JwtUtil jwtUtil;
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody @Valid LoginVM loginVm) {
+    public ResponseEntity<?> login(@RequestBody @Valid LoginVM loginVm) {
         User user= userRepository.findByUsername(loginVm.username);
         if(user==null){
             return ResponseEntity.badRequest().body("Invalid username");
@@ -47,8 +51,10 @@ public class AuthController {
         List<String> claimList= userClaims.stream().map(userClaim->userClaim.getClaim().getClaimValue()).toList();
         Map<String,Object> claims= new HashMap<>();
         claims.put("roles",claimList);
-        String token= jwtUtil.generateToken(loginVm.username,claims);
-        return ResponseEntity.ok(token);
+        String accessToken= jwtUtil.generateAccessToken(loginVm.username,claims);
+        String refreshToken= jwtUtil.generateRefeshToken(loginVm.username);
+        AuthResponse authResponse = new AuthResponse(accessToken,refreshToken);
+        return ResponseEntity.ok(authResponse);
     }
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody @Valid RegisterVM registerVM){
@@ -90,5 +96,26 @@ public class AuthController {
         user.setPassword(model.NewPassWord);
         userRepository.save(user);
         return ResponseEntity.ok(user);
+    }
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@RequestHeader("Authorization") String refreshToken){
+        String tokenId= jwtUtil.getRefreshTokenId(refreshToken);
+        jwtUtil.deleteRefreshToken(tokenId);
+        SecurityContextHolder.clearContext();
+        return ResponseEntity.ok("Logout success");
+    }
+    @PostMapping("/refresh")
+    public ResponseEntity<String> refresh(@RequestBody AuthResponse request){
+        String tokenId= jwtUtil.getRefreshTokenId(request.getRefreshToken());
+        if(jwtUtil.validateRefreshToken(tokenId)){
+            String oldAccessToken = request.getAccessToken();
+            String userName = jwtUtil.getUserName(oldAccessToken);
+            Claims claims = jwtUtil.getClaimsFromToken(oldAccessToken);
+            String accessToken = jwtUtil.generateAccessToken(userName,claims);
+            return ResponseEntity.ok(accessToken);
+        }
+        else {
+            return ResponseEntity.badRequest().body("Invalid token");
+        }
     }
 }
