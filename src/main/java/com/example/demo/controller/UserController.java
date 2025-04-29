@@ -28,12 +28,4 @@ public class UserController {
         return userRepository.findByUsername(id);
     }
 
-    @PostMapping
-    public ResponseEntity<User> addUser(@RequestBody User user){
-        userRepository.save(user);
-        UserClaim userClaim= new UserClaim();
-        userClaim.userId= user.getId();
-        userClaim.claimId= 1;
-        return ResponseEntity.ok(user);
-    }
 }

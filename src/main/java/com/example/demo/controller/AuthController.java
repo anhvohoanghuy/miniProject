@@ -53,7 +53,7 @@ public class AuthController {
         claims.put("roles",claimList);
         String accessToken= jwtUtil.generateAccessToken(loginVm.username,claims);
         String refreshToken= jwtUtil.generateRefeshToken(loginVm.username);
-        AuthResponse authResponse = new AuthResponse(accessToken,refreshToken);
+        AuthResponse authResponse = new AuthResponse(accessToken,refreshToken,user.getId().toString());
         return ResponseEntity.ok(authResponse);
     }
     @PostMapping("/register")
@@ -98,8 +98,8 @@ public class AuthController {
         return ResponseEntity.ok(user);
     }
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(@RequestHeader("Authorization") String refreshToken){
-        String tokenId= jwtUtil.getRefreshTokenId(refreshToken);
+    public ResponseEntity<?> logout(@RequestBody AuthResponse request){
+        String tokenId= jwtUtil.getRefreshTokenId(request.getRefreshToken());
         jwtUtil.deleteRefreshToken(tokenId);
         SecurityContextHolder.clearContext();
         return ResponseEntity.ok("Logout success");

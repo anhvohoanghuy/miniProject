@@ -26,7 +26,7 @@ public class TaskController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Task> updateTask(@PathVariable UUID id, @RequestBody Task task) {
+    public ResponseEntity<Task> updateTask(@PathVariable UUID id, @RequestBody TaskDto task) {
         return ResponseEntity.ok(taskService.updateTask(id, task));
     }
 
@@ -37,11 +37,14 @@ public class TaskController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Task>> getAllTasks(
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) Integer status,
-            @RequestParam(required = false) String sortBy) {
-        return ResponseEntity.ok(taskService.getAllTasks(keyword, status, sortBy));
+    public ResponseEntity<List<TaskDto>> getAllTasks(
+            @RequestParam String userId) {
+        return ResponseEntity.ok(taskService.getAllTasks(userId));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<TaskDto> getTask(@PathVariable UUID id) {
+        return ResponseEntity.ok(taskService.getTask(id));
     }
 
     @PatchMapping("/{id}/status")
