@@ -79,7 +79,7 @@ public class AuthController {
         userClaimRepository.save(userClaim);
         return ResponseEntity.ok(newUser);
     }
-    @PatchMapping("/changePassWord")
+    @PatchMapping("/{id}/changePassword")
     public  ResponseEntity <?> changePassWord(@PathVariable UUID id, @RequestBody @Valid ChangePassVM model){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userName = authentication.getName();
@@ -87,15 +87,12 @@ public class AuthController {
         if(user==null){
             return ResponseEntity.badRequest().body("User not found");
         }
-        if(!model.ComfirmPassWord.equals(model.NewPassWord)){
-            return ResponseEntity.badRequest().body("Mật khẩu không khớp");
-        }
-        if(!model.OldPassWord.equals(user.getPassword())){
+        if(!model.CurrentPassword.equals(user.getPassword())){
             return ResponseEntity.badRequest().body("Sai mật khẩu cũ");
         }
-        user.setPassword(model.NewPassWord);
+        user.setPassword(model.NewPassword);
         userRepository.save(user);
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok("Đổi mật khẩu thành công");
     }
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@RequestBody AuthResponse request){

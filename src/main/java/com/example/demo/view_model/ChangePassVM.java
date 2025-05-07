@@ -6,9 +6,7 @@ import java.security.PublicKey;
 
 public class ChangePassVM {
     @NotNull
-    public String OldPassWord;
+    public String CurrentPassword;
     @NotNull
-    public String NewPassWord;
-    @NotNull
-    public String ComfirmPassWord;
+    public String NewPassword;
 }

@@ -11,7 +11,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name="user")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @ToString
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @ToString(exclude = {"tasks","userClaims" })
 public class User {
     @Id
     @GeneratedValue(generator = "uuid2")
