@@ -61,13 +61,13 @@ public class AuthController {
         User user = userRepository.findByUsername(registerVM.username);
         if(user!=null){
             ResponseEntity.badRequest().body("UserName đã tồn tại");
-        }if(registerVM.passWord.equals(registerVM.comfirmPassWord)){
+        }if(registerVM.password.equals(registerVM.comfirmPassword)){
             ResponseEntity.badRequest().body("Mật khẩu không trùng nhau");
         }
         User newUser= new User();
         newUser.setEmail(registerVM.email);
         newUser.setUsername(registerVM.username);
-        newUser.setPassword(registerVM.passWord);
+        newUser.setPassword(registerVM.password);
         userRepository.save(newUser);
         User currentUser= userRepository.findByUsername(registerVM.username);
         if(currentUser ==null){

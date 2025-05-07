@@ -22,7 +22,7 @@ public class JwtUtil {
     private static final String SECRET_KEY = "yourverystrongsecretkeywhichisatleast32bytes";
     private static final SecretKey SECRET = Keys.hmacShaKeyFor(Decoders.BASE64.decode(SECRET_KEY));
     @Autowired
-    private RedisTemplate<String,String> redisTemplate;
+    private RedisTemplate<String, String> redisTemplate;
 
     //Tạo jwt từ userName
     public String generateAccessToken(String useName, Map<String, Object> claims) {
@@ -30,15 +30,16 @@ public class JwtUtil {
                 .setClaims(claims)
                 .setSubject(useName)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 15))
                 .signWith(SECRET)
                 .compact();
     }
+
     public String generateRefeshToken(String useName) {
         Instant now = Instant.now();
         Instant expiry = now.plus(30, ChronoUnit.DAYS); // 30 ngày
-        String tokenId= UUID.randomUUID().toString();
-        saveRefreshToken(useName,tokenId,expiry);
+        String tokenId = UUID.randomUUID().toString();
+        saveRefreshToken(useName, tokenId, expiry);
         return Jwts.builder()
                 .setSubject(useName)
                 .claim("type", "refresh")
@@ -49,25 +50,42 @@ public class JwtUtil {
                 .compact();
 
     }
-    public void saveRefreshToken(String useName, String id,Instant expiry){
-        String key = "refresh_token: "+id;
-        Duration ttl = Duration.between(Instant.now(),expiry);
-        redisTemplate.opsForValue().set(key,useName,ttl);
+
+    public void saveRefreshToken(String useName, String id, Instant expiry) {
+        String key = "refresh_token: " + id;
+        Duration ttl = Duration.between(Instant.now(), expiry);
+        redisTemplate.opsForValue().set(key, useName, ttl);
     }
-    public void deleteRefreshToken(String id){
-        String key= "refresh_token: "+id;
+
+    public void deleteRefreshToken(String id) {
+        String key = "refresh_token: " + id;
         redisTemplate.delete(key);
     }
-    public  boolean validateRefreshToken(String id){
-        String key= "refresh_token: "+id;
-        return  redisTemplate.hasKey(key);
+
+    public boolean validateRefreshToken(String id) {
+        String key = "refresh_token: " + id;
+        return redisTemplate.hasKey(key);
     }
-    public String getRefreshTokenId(String token){
-        Claims claims= getClaimsFromToken(token);
+
+    public String getRefreshTokenId(String token) {
+        Claims claims = getClaimsFromToken(token);
         return claims.getId();
     }
+
     public Claims getClaimsFromToken(String token) {
-        return Jwts.parserBuilder().setSigningKey(SECRET).build().parseClaimsJws(token).getBody();
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(SECRET)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+        } catch (ExpiredJwtException e) {
+            // 👉 Token hết hạn nhưng vẫn muốn lấy claims
+            return e.getClaims();
+        } catch (Exception e) {
+            // 👉 Các lỗi khác: sai chữ ký, token không hợp lệ
+            return null;
+        }
     }
 
     public String getUserName(String token) {
@@ -77,7 +95,7 @@ public class JwtUtil {
 
     public List<String> getRole(String token) {
         Claims claim = getClaimsFromToken(token);
-        return claim.get("role", List.class);
+        return claim.get("roles", List.class);
     }
 
     public Date getExpiration(String token) {
@@ -87,7 +105,7 @@ public class JwtUtil {
 
     public boolean validateToken(String token) {
         try {
-            if (getExpiration(token).after(new Date())){
+            if (getExpiration(token).after(new Date())) {
                 return true;
             }
         } catch (

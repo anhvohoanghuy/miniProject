@@ -8,7 +8,7 @@ public class RegisterVM {
     @NotNull
     public String email;
     @NotNull
-    public String passWord;
+    public String password;
     @NotNull
-    public String comfirmPassWord;
+    public String comfirmPassword;
 }

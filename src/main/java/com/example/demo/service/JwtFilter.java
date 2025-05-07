@@ -4,6 +4,7 @@ package com.example.demo.service;
 import jakarta.servlet.ServletException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
@@ -34,11 +35,10 @@ public class JwtFilter extends OncePerRequestFilter {
                     String userName= jwtUtil.getUserName(token);
                     List<String> role= jwtUtil.getRole(token);
                     //Đặt username vào security
-                    User userDetail =  new User(userName,"",role.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList()));
+                    List<GrantedAuthority> authorities = role.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList());
                     UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(userDetail,null,userDetail.getAuthorities());
+                            new UsernamePasswordAuthenticationToken(userName,null,authorities);
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }else {
                     throw new ServletException("Invalid token!");
