@@ -37,9 +37,12 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable)
                 .cors(cors->{})
                 .authorizeHttpRequests(ath -> ath
-                        .requestMatchers("/api/auth/login", "/api/auth/register","/api/auth/logout","/api/auth/refresh").permitAll()
-                       // .requestMatchers("/api/claims/**").hasRole("customer")  // Chỉ customer mới được gọi API này
-                        .requestMatchers("/api/**").hasRole("customer")
+                        .requestMatchers(
+                                "/api/auth/login",
+                                "/api/auth/register",
+                                "/api/auth/logout",
+                                "/api/auth/refresh")
+                        .permitAll()
                         .requestMatchers(
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
@@ -47,8 +50,8 @@ public class SecurityConfig {
                                 "/swagger-resources/**",
                                 "/webjars/**"
                         ).permitAll()
+                        .requestMatchers("/api/**").hasRole("customer")
                         .anyRequest().authenticated())
-                        //.anyRequest().permitAll())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter(), UsernamePasswordAuthenticationFilter.class);

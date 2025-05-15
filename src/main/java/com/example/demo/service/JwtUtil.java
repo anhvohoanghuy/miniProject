@@ -80,10 +80,10 @@ public class JwtUtil {
                     .parseClaimsJws(token)
                     .getBody();
         } catch (ExpiredJwtException e) {
-            // 👉 Token hết hạn nhưng vẫn muốn lấy claims
+            // Token hết hạn nhưng vẫn muốn lấy claims
             return e.getClaims();
         } catch (Exception e) {
-            // 👉 Các lỗi khác: sai chữ ký, token không hợp lệ
+            // Các lỗi khác: sai chữ ký, token không hợp lệ
             return null;
         }
     }

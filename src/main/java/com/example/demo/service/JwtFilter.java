@@ -2,6 +2,8 @@ package com.example.demo.service;
 
 
 import jakarta.servlet.ServletException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -21,12 +23,18 @@ import java.util.stream.Collectors;
 public class JwtFilter extends OncePerRequestFilter {
     @Autowired
     private final JwtUtil jwtUtil;
-
+    private static final Logger logger = LoggerFactory.getLogger(JwtFilter.class);
     public JwtFilter(JwtUtil jwtUtil) {
         this.jwtUtil = jwtUtil;
     }
     @Override
     protected void doFilterInternal(jakarta.servlet.http.HttpServletRequest request, jakarta.servlet.http.HttpServletResponse response, jakarta.servlet.FilterChain filterChain) throws ServletException, IOException {
+        // Bỏ qua các API không cần xác thực JWT
+        String path = request.getServletPath();
+        if (path.startsWith("/api/auth/") || path.startsWith("/swagger") || path.startsWith("/v3/api-docs")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
         String authorizationHeader = request.getHeader("Authorization");
         if(authorizationHeader!=null && authorizationHeader.startsWith("Bearer ")){
             String token=authorizationHeader.substring(7);
@@ -41,7 +49,7 @@ public class JwtFilter extends OncePerRequestFilter {
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }else {
-                    throw new ServletException("Invalid token!");
+                    logger.warn("Invalid JWT token");
                 }
             } catch (Exception e) {
                 throw new ServletException(e);
