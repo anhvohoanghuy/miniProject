@@ -21,6 +21,8 @@ import java.beans.Transient;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+
 @RequiredArgsConstructor
 @Service
 public class AuthService implements IAuthService {
@@ -31,10 +33,11 @@ public class AuthService implements IAuthService {
 
     @Override
     public ResponseEntity<?> login(LoginVM model) {
-        User user= userRepository.findByUsername(model.username);
-        if(user==null){
+        Optional<User> userOptional= userRepository.findByUsername(model.username);
+        if(userOptional.isEmpty()){
             return ResponseEntity.badRequest().body("Invalid username");
         }
+        User user=userOptional.get();
         if(!user.getPassword().equals(model.password)){
             return ResponseEntity.badRequest().body("Invalid password");
         }
@@ -52,8 +55,8 @@ public class AuthService implements IAuthService {
     @Override
     @Transactional
     public ResponseEntity<?> register(RegisterVM model) {
-        User user = userRepository.findByUsername(model.username);
-        if(user != null){
+        Optional<User> user = userRepository.findByUsername(model.username);
+        if(user.isPresent()){
             return ResponseEntity.badRequest().body("UserName đã tồn tại");
         }
         if(!model.password.equals(model.comfirmPassword)){
@@ -64,13 +67,13 @@ public class AuthService implements IAuthService {
         newUser.setUsername(model.username);
         newUser.setPassword(model.password);
         userRepository.save(newUser);
-        User currentUser= userRepository.findByUsername(model.username);
-        if(currentUser ==null){
+        Optional<User> currentUser= userRepository.findByUsername(model.username);
+        if(currentUser.isEmpty()){
             return ResponseEntity.badRequest().body("Lỗi khi add role");
         }
         UserClaim userClaim = new UserClaim();
         userClaim.setClaimId(2);
-        userClaim.setUserId(currentUser.getId());
+        userClaim.setUserId(currentUser.get().getId());
         userClaimRepository.save(userClaim);
         return ResponseEntity.ok(newUser);
     }
@@ -79,15 +82,15 @@ public class AuthService implements IAuthService {
     public ResponseEntity<?> changePassWord(ChangePassVM model) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userName = authentication.getName();
-        User user = userRepository.findByUsername(userName);
-        if(user==null){
+        Optional<User> user = userRepository.findByUsername(userName);
+        if(user.isEmpty()){
             return ResponseEntity.badRequest().body("User not found");
         }
-        if(!model.CurrentPassword.equals(user.getPassword())){
+        if(!model.CurrentPassword.equals(user.get().getPassword())){
             return ResponseEntity.badRequest().body("Sai mật khẩu cũ");
         }
-        user.setPassword(model.NewPassword);
-        userRepository.save(user);
+        user.get().setPassword(model.NewPassword);
+        userRepository.save(user.get());
         return ResponseEntity.ok("Đổi mật khẩu thành công");
     }
 

@@ -16,7 +16,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TaskDto {
-    private  UUID id;
+    private  String id;
 
     private String title;
 
@@ -30,5 +30,5 @@ public class TaskDto {
     // 1: chưa bắt đầu, 2: đang thực hiện, 3: tạm dừng, 4: hoàn thành, 5: quá hạn
     private Integer priority;
 
-    private UUID userId;
+    private String userId;
 }

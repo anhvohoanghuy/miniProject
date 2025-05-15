@@ -9,5 +9,5 @@ import java.util.UUID;
 
 @Repository
 public interface IUserClaimRepository extends JpaRepository<UserClaim, Integer> {
-    List<UserClaim> findByUserId(UUID userId);
+    List<UserClaim> findByUserId(String userId);
 }

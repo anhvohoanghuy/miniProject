@@ -33,7 +33,7 @@ public class TaskService {
         return taskRepository.save(task);
     }
 
-    public Task updateTask(UUID id, TaskDto taskDetails) {
+    public Task updateTask(String id, TaskDto taskDetails) {
         Optional<Task> taskOptional = taskRepository.findById(id);
         if (taskOptional.isEmpty()){
             return null;
@@ -48,7 +48,7 @@ public class TaskService {
         return taskRepository.save(task);
     }
 
-    public void deleteTask(UUID id) {
+    public void deleteTask(String id) {
         Task task = taskRepository.findById(id).orElseThrow(() -> new RuntimeException("Task not found"));
         taskRepository.delete(task);
     }
@@ -62,7 +62,7 @@ public class TaskService {
             new TaskDto(task.getId(),task.getTitle(), task.getDescription(), task.getStartDate(), task.getEndDate(), task.getStatus(), task.getPriority(), task.getUserId()))
                 .collect(Collectors.toList());
     }
-    public TaskDto getTask(UUID id){
+    public TaskDto getTask(String id){
         var task= taskRepository.findById(id);
         if (task.isEmpty()){
             return null;
@@ -73,7 +73,7 @@ public class TaskService {
                 currentTask.getEndDate(),currentTask.getStatus(),currentTask.getPriority(),
                 currentTask.getUserId());
     }
-    public Task updateStatus(UUID id, Integer newStatus) {
+    public Task updateStatus(String id, Integer newStatus) {
         Optional<Task> task = taskRepository.findById(id);
         if(task.isEmpty()){
             System.out.println("task null");

@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.UUID;
 @Repository
-public interface ITaskRepository extends JpaRepository<Task, UUID> {
+public interface ITaskRepository extends JpaRepository<Task, String> {
     List<Task> findByTitleContainingIgnoreCase(String keyword);
     List<Task> findByStatus(Integer status);
 }

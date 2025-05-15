@@ -19,7 +19,7 @@ public class UserClaim {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public int id;
     @Column(name="user_id",nullable = false)
-    public UUID userId;
+    public String userId;
     @Column(name="claim_id",nullable = false)
     public int claimId;
     @ManyToOne(fetch = FetchType.LAZY)

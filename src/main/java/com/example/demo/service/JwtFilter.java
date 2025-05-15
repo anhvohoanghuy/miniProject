@@ -31,7 +31,11 @@ public class JwtFilter extends OncePerRequestFilter {
     protected void doFilterInternal(jakarta.servlet.http.HttpServletRequest request, jakarta.servlet.http.HttpServletResponse response, jakarta.servlet.FilterChain filterChain) throws ServletException, IOException {
         // Bỏ qua các API không cần xác thực JWT
         String path = request.getServletPath();
-        if (path.startsWith("/api/auth/") || path.startsWith("/swagger") || path.startsWith("/v3/api-docs")) {
+        if (path.startsWith("/api/auth/login") ||
+                path.startsWith("/api/auth/register")||
+                path.startsWith("/api/auth/logout")||
+                path.startsWith("/api/auth/refresh")
+                || path.startsWith("/swagger") || path.startsWith("/v3/api-docs")) {
             filterChain.doFilter(request, response);
             return;
         }
