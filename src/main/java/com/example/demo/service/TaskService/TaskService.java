@@ -1,15 +1,16 @@
 package com.example.demo.service.TaskService;
 
-import com.example.demo.config.RabbitMQConfig;
 import com.example.demo.dto.LogDto;
 import com.example.demo.dto.TaskDto;
+import com.example.demo.exception.CustomException;
+import com.example.demo.exception.ErrorEnum;
 import com.example.demo.model.Task;
 import com.example.demo.model.TaskLog;
 import com.example.demo.repository.ITaskRepository;
 import com.example.demo.service.RabbitMQService.LogProducer;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -18,7 +19,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
 
 
 @Service
@@ -27,7 +28,8 @@ public class TaskService implements ITaskService {
     private final ITaskRepository taskRepository;
     private final LogProducer logProducer;
 
-    public Task createTask(TaskDto model) {
+    @Async
+    public CompletableFuture<Task> createTask(TaskDto model) {
 
         Task task = new Task();
         task.setTitle(model.getTitle());
@@ -37,74 +39,84 @@ public class TaskService implements ITaskService {
         task.setPriority(model.getPriority());
         task.setStatus(1); // Mặc định là chưa bắt đầu
         task.setUserId(model.getUserId());
-        LogDto logDto = new LogDto(model.getUserId()+" Create "+ model.getTitle(),LocalDateTime.now());
-        TaskLog taskLog=new TaskLog(logDto);
+        LogDto logDto = new LogDto(model.getUserId() + " Create " + model.getTitle(), LocalDateTime.now());
+        TaskLog taskLog = new TaskLog(logDto);
         logProducer.sendTaskLog(taskLog);
-        return taskRepository.save(task);
+        Task saveTask = taskRepository.save(task);
+        return CompletableFuture.completedFuture(saveTask);
     }
 
-    public Task updateTask(String id, TaskDto taskDetails) {
-        Optional<Task> taskOptional = taskRepository.findById(id);
-        if (taskOptional.isEmpty()){
-            return null;
-        }
-        Task task = taskOptional.get();
-        task.setTitle(taskDetails.getTitle());
-        task.setDescription(taskDetails.getDescription());
-        task.setStartDate(taskDetails.getStartDate());
-        task.setEndDate(taskDetails.getEndDate());
-        task.setPriority(taskDetails.getPriority());
-        task.setStatus(taskDetails.getStatus());
-        return taskRepository.save(task);
+    public CompletableFuture<Task> updateTask(String id, TaskDto taskDetails) {
+        Task task = update(id, taskDetails);
+        LogDto logDto = new LogDto(taskDetails.getUserId() + " Create " + taskDetails.getTitle(), LocalDateTime.now());
+        TaskLog taskLog = new TaskLog(logDto);
+        logProducer.sendTaskLog(taskLog);
+        return CompletableFuture.completedFuture(task);
     }
-
-    public void deleteTask(String id) {
-        Task task = taskRepository.findById(id).orElseThrow(() -> new RuntimeException("Task not found"));
+    @Async
+    public CompletableFuture<Void> deleteTask(String id) {
+        Task task = taskRepository.findById(id).orElseThrow(() -> new CustomException(ErrorEnum.TASK_NOT_FOUND));
         taskRepository.delete(task);
+        return CompletableFuture.completedFuture(null);
     }
 
-    public List<TaskDto> getAllTasks(String userId) {
-        List<Task> tasks = taskRepository.findAll().stream().filter(task -> Objects.equals(task.getUserId().toString(), userId))
+    @Async
+    public CompletableFuture<List<Task>> getAllTasks(String userId) {
+        List<Task> tasks = taskRepository.findAll().stream().filter(task -> Objects.equals(task.getUserId(), userId))
                 .toList();
 
-        return tasks.stream()
-                .map(task ->
-            new TaskDto(task.getId(),task.getTitle(), task.getDescription(), task.getStartDate(), task.getEndDate(), task.getStatus(), task.getPriority(), task.getUserId()))
-                .collect(Collectors.toList());
+        return CompletableFuture.completedFuture(tasks);
     }
-    public TaskDto getTask(String id){
-        var task= taskRepository.findById(id);
-        if (task.isEmpty()){
-            return null;
+
+    public CompletableFuture<Task> getTask(String id) {
+        var task = taskRepository.findById(id);
+        if (task.isEmpty()) {
+            throw new CustomException(ErrorEnum.TASK_NOT_FOUND);
         }
         var currentTask = task.get();
-        return new TaskDto(currentTask.getId(),currentTask.getTitle(),
-                currentTask.getDescription(),currentTask.getStartDate(),
-                currentTask.getEndDate(),currentTask.getStatus(),currentTask.getPriority(),
-                currentTask.getUserId());
+        return CompletableFuture.completedFuture(currentTask);
     }
-    public Task updateStatus(String id, Integer newStatus) {
+
+    public CompletableFuture<Task> updateStatus(String id, Integer newStatus) {
         Optional<Task> task = taskRepository.findById(id);
-        if(task.isEmpty()){
+        if (task.isEmpty()) {
             System.out.println("task null");
-            return null;
+            throw new CustomException(ErrorEnum.TASK_NOT_FOUND);
         }
         Task tasks = task.get();
         tasks.setStatus(newStatus);
-        return taskRepository.save(tasks);
+        return CompletableFuture.completedFuture(taskRepository.save(tasks));
     }
+
     @Scheduled(cron = "0 0 1 * * *")
-    public void autoUpdateStatus() {
+    public CompletableFuture<Void> autoUpdateStatus() {
         List<Task> tasks = taskRepository.findAll();
-        LocalDate today = LocalDate.now();
+        LocalDateTime today = LocalDateTime.now();
 
         for (Task task : tasks) {
-            if (task.getEndDate() != null && LocalDateTime.now().isAfter(task.getEndDate())) {
+            if (task.getEndDate() != null && today.isAfter(task.getEndDate())) {
                 task.setStatus(5); // quá hạn
-            } else if (task.getStartDate() != null && LocalDateTime.now().isBefore(task.getStartDate())) {
+            } else if (task.getStartDate() != null && today.isBefore(task.getStartDate())) {
                 task.setStatus(1); // chưa bắt đầu
             }
             taskRepository.save(task);
         }
+        return CompletableFuture.completedFuture(null);
+    }
+
+    @Transactional
+    public Task update(String id, TaskDto update) {
+        Optional<Task> taskOptional = taskRepository.findById(id);
+        if (taskOptional.isEmpty()) {
+            throw new CustomException(ErrorEnum.USER_NOT_FOUND);
+        }
+        Task task = taskOptional.get();
+        task.setTitle(update.getTitle());
+        task.setDescription(update.getDescription());
+        task.setStartDate(update.getStartDate());
+        task.setEndDate(update.getEndDate());
+        task.setPriority(update.getPriority());
+        task.setStatus(update.getStatus());
+        return task;
     }
 }

@@ -1,15 +1,16 @@
 package com.example.demo.controller;
 
+import com.example.demo.dto.ApiResponse;
 import com.example.demo.dto.TaskDto;
 import com.example.demo.model.Task;
 import com.example.demo.service.TaskService.ITaskService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("api/task")
@@ -17,43 +18,45 @@ import java.util.List;
 public class TaskController {
 
     private final ITaskService taskService;
-
+    @Async
     @PostMapping
-    public ResponseEntity<Task> createTask(@RequestBody TaskDto task) {
-        return new ResponseEntity<>(taskService.createTask(task), HttpStatus.CREATED);
+    public CompletableFuture<ResponseEntity<ApiResponse<Task>>> createTask(@RequestBody TaskDto task) {
+        return taskService.createTask(task).thenApply(taskResponse-> ResponseEntity.ok(ApiResponse.ok(taskResponse)));
     }
-
+@Async
     @PutMapping("/{id}")
-    public ResponseEntity<Task> updateTask(@PathVariable String id, @RequestBody TaskDto task) {
-        return ResponseEntity.ok(taskService.updateTask(id, task));
+    public CompletableFuture<ResponseEntity<ApiResponse<Task>>> updateTask(@PathVariable String id, @RequestBody TaskDto task) {
+        return taskService.updateTask(id,task).thenApply(response-> ResponseEntity.ok(ApiResponse.ok(response)));
     }
-
+    @Async
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTask(@PathVariable String id) {
-        taskService.deleteTask(id);
-        return ResponseEntity.ok().build();
+    public CompletableFuture<ResponseEntity<Void>> deleteTask(@PathVariable String id) {
+        return taskService.deleteTask(id).thenApply(response->ResponseEntity.ok().build());
     }
 
+    @Async
     @GetMapping
-    public ResponseEntity<List<TaskDto>> getAllTasks(
+    public CompletableFuture<ResponseEntity<ApiResponse<List<Task>>>> getAllTasks(
             @RequestParam String userId) {
-        return ResponseEntity.ok(taskService.getAllTasks(userId));
+        return taskService.getAllTasks(userId).thenApply(response-> ResponseEntity.ok(ApiResponse.ok(response)));
     }
 
+    @Async
     @GetMapping("/{id}")
-    public ResponseEntity<TaskDto> getTask(@PathVariable String id) {
-        return ResponseEntity.ok(taskService.getTask(id));
+    public CompletableFuture<ResponseEntity<ApiResponse<Task>>> getTask(@PathVariable String id) {
+        return taskService.getTask(id).thenApply(response-> ResponseEntity.ok(ApiResponse.ok(response)));
     }
 
+    @Async
     @PatchMapping("/{id}/status")
-    public ResponseEntity<Task> updateStatus(@PathVariable String id, @RequestParam Integer status) {
-        return ResponseEntity.ok(taskService.updateStatus(id, status));
+    public CompletableFuture<ResponseEntity<ApiResponse<Task>>> updateStatus(@PathVariable String id, @RequestParam Integer status) {
+        return taskService.updateStatus(id, status).thenApply(response->ResponseEntity.ok(ApiResponse.ok(response)));
     }
 
+    @Async
     // Auto update trạng thái
     @PostMapping("/update-status")
-    public ResponseEntity<Void> autoUpdateStatus() {
-        taskService.autoUpdateStatus();
-        return ResponseEntity.ok().build();
+    public CompletableFuture<ResponseEntity<Void>> autoUpdateStatus() {
+        return taskService.autoUpdateStatus().thenApply(response->ResponseEntity.ok().build());
     }
 }

@@ -15,7 +15,8 @@ public enum ErrorEnum {
     USERNAME_ALREADY_EXISTS(409,"Username already exists",HttpStatus.BAD_REQUEST),
     Email_ALREADY_EXISTS(409,"Email already exists",HttpStatus.BAD_REQUEST),
     USER_NOT_FOUND(400,"User not found",HttpStatus.NOT_FOUND),
-    INVALID_TOKEN(403,"Invalid token",HttpStatus.FORBIDDEN)
+    INVALID_TOKEN(403,"Invalid token",HttpStatus.FORBIDDEN),
+    TASK_NOT_FOUND(400,"Task not found",HttpStatus.NOT_FOUND),
     ;
 
     private int code;
