@@ -17,10 +17,15 @@ public class ChatKafkaConsumer {
 
     @KafkaListener(topics = "private-messages", groupId = "chat-app",concurrency = "3")
     public void handlePrivate(MessageDto message) {
-        // Lưu DB ở đây
-        Message message1= new Message(message);
-        messageRepository.save(message1);
-        // Gửi lại cho người nhận
-        messagingTemplate.convertAndSend("/topic/chat/private/" + message.getReceiver(), message);
+        try{
+            // Lưu DB ở đây
+            Message message1= new Message(message);
+            messageRepository.save(message1);
+            // Gửi lại cho người nhận
+            messagingTemplate.convertAndSend("/topic/chat/private/" + message.getReceiver(), message);
+        }catch (Exception e){
+            System.out.println("Lỗi lưu db mesage");
+            throw e;
+        }
     }
 }
