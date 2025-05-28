@@ -1,11 +1,11 @@
-package com.example.demo.service;
+package com.example.demo.service.JwtService;
 
-import com.example.demo.model.Claim;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -16,6 +16,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @Component
 public class JwtUtil {
@@ -25,22 +26,24 @@ public class JwtUtil {
     private RedisTemplate<String, String> redisTemplate;
 
     //Tạo jwt từ userName
-    public String generateAccessToken(String useName, Map<String, Object> claims) {
-        return Jwts.builder()
+    @Async
+    public CompletableFuture<String> generateAccessToken(String useName, Map<String, Object> claims) {
+        String token = Jwts.builder()
                 .setClaims(claims)
                 .setSubject(useName)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 15))
                 .signWith(SECRET)
                 .compact();
+        return CompletableFuture.completedFuture(token);
     }
-
-    public String generateRefeshToken(String useName) {
+    @Async
+    public CompletableFuture<String> generateRefeshToken(String useName) {
         Instant now = Instant.now();
         Instant expiry = now.plus(30, ChronoUnit.DAYS); // 30 ngày
         String tokenId = UUID.randomUUID().toString();
         saveRefreshToken(useName, tokenId, expiry);
-        return Jwts.builder()
+        String token = Jwts.builder()
                 .setSubject(useName)
                 .claim("type", "refresh")
                 .setId(tokenId) // jti
@@ -48,7 +51,7 @@ public class JwtUtil {
                 .setExpiration(Date.from(expiry))
                 .signWith(SECRET)
                 .compact();
-
+        return CompletableFuture.completedFuture(token);
     }
 
     public void saveRefreshToken(String useName, String id, Instant expiry) {

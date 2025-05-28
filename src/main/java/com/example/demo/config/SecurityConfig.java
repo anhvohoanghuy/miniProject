@@ -1,7 +1,7 @@
 package com.example.demo.config;
 
-import com.example.demo.service.JwtFilter;
-import com.example.demo.service.JwtUtil;
+import com.example.demo.service.JwtService.JwtFilter;
+import com.example.demo.service.JwtService.JwtUtil;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -14,7 +14,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.filter.CorsFilter;
 
 import java.util.List;
 
@@ -35,14 +34,16 @@ public class SecurityConfig {
     @Bean
     public DefaultSecurityFilterChain configure(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
-                .cors(cors->{})
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(ath -> ath
                         .requestMatchers(
                                 "/api/auth/login",
                                 "/api/auth/register",
                                 "/api/auth/logout",
-                                "/api/auth/refresh")
-                        .permitAll()
+                                "/api/auth/refresh",
+                                "/api/task",
+                                "/ws/**"
+                        ).permitAll()
                         .requestMatchers(
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
@@ -50,7 +51,7 @@ public class SecurityConfig {
                                 "/swagger-resources/**",
                                 "/webjars/**"
                         ).permitAll()
-                        .requestMatchers("/api/**").hasRole("customer")
+                        .requestMatchers("/api/**").hasAnyRole("customer","admin")
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -69,4 +70,5 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
+
 }

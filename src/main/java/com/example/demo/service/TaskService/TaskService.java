@@ -1,8 +1,14 @@
-package com.example.demo.service;
+package com.example.demo.service.TaskService;
 
+import com.example.demo.config.RabbitMQConfig;
+import com.example.demo.dto.LogDto;
 import com.example.demo.dto.TaskDto;
 import com.example.demo.model.Task;
+import com.example.demo.model.TaskLog;
 import com.example.demo.repository.ITaskRepository;
+import com.example.demo.service.RabbitMQService.LogProducer;
+import lombok.AllArgsConstructor;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -12,16 +18,17 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 
 @Service
-public class TaskService {
-    @Autowired
-    private ITaskRepository taskRepository;
+@AllArgsConstructor
+public class TaskService implements ITaskService {
+    private final ITaskRepository taskRepository;
+    private final LogProducer logProducer;
 
     public Task createTask(TaskDto model) {
+
         Task task = new Task();
         task.setTitle(model.getTitle());
         task.setDescription(model.getDescription());
@@ -30,6 +37,9 @@ public class TaskService {
         task.setPriority(model.getPriority());
         task.setStatus(1); // Mặc định là chưa bắt đầu
         task.setUserId(model.getUserId());
+        LogDto logDto = new LogDto(model.getUserId()+" Create "+ model.getTitle(),LocalDateTime.now());
+        TaskLog taskLog=new TaskLog(logDto);
+        logProducer.sendTaskLog(taskLog);
         return taskRepository.save(task);
     }
 

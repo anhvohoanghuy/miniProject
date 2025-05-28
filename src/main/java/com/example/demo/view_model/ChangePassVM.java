@@ -9,4 +9,6 @@ public class ChangePassVM {
     public String CurrentPassword;
     @NotNull
     public String NewPassword;
+    @NotNull
+    public String UserId;
 }

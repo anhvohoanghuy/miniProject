@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 
+import java.io.Serializable;
 import java.util.Set;
 
 @Entity
@@ -15,7 +16,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class Claim {
+public class Claim implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

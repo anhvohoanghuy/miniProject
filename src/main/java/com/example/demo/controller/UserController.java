@@ -7,6 +7,7 @@ import com.example.demo.repository.IUserClaimRepository;
 import com.example.demo.repository.IUserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,6 +20,8 @@ public class UserController {
     private IUserRepository userRepository;
     @Autowired
     private IUserClaimRepository userClaim;
+
+    @PreAuthorize("hasRole('admin')")
     @GetMapping
     public List<User> getAllUsers(){
         return userRepository.findAll();
@@ -29,5 +32,6 @@ public class UserController {
         Optional<User> user = userRepository.findById(id);
         return user.orElse(null);
     }
+
 
 }

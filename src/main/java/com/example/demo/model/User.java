@@ -7,13 +7,14 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
 
+import java.io.Serializable;
 import java.util.Set;
 import java.util.UUID;
 
 @Entity
 @Table(name="user")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @ToString(exclude = {"tasks","userClaims" })
-public class User {
+public class User implements Serializable {
     @Id
     @GeneratedValue
     @UuidGenerator

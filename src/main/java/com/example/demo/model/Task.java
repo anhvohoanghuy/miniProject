@@ -3,12 +3,11 @@ package com.example.demo.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.GenericGenerator;
+
 import org.hibernate.annotations.UuidGenerator;
 
-import java.time.LocalDate;
+import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Table(name = "tasks")
@@ -17,7 +16,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString(exclude = "user")
-public class Task {
+public class Task implements Serializable {
     @Id
     @UuidGenerator
     private String id;
@@ -47,4 +46,53 @@ public class Task {
     @JoinColumn(name="user_id",insertable = false,updatable = false)
     @JsonIgnore
     public User user;
+
+    private Task(Builder builder){
+        this.title= builder.title;
+        this.description= builder.description;
+        this.startDate = builder.startDate;
+        this.endDate = builder.endDate;
+        this.priority = builder.priority;
+        this.userId = builder.userId;
+    }
+
+    public static class Builder {
+        private String title;
+        private String description;
+        private LocalDateTime startDate;
+        private LocalDateTime endDate;
+        private Integer priority;
+        private String userId;
+
+
+        public Builder(String title){
+            if (title==null||title.isBlank()){
+                throw new IllegalArgumentException("Title không được để trống");
+            }
+            this.title = title;
+        }
+        private Builder description(String description){
+            this.description=description;
+            return this;
+        }
+        private Builder startDate(LocalDateTime startDate){
+            this.startDate=startDate;
+            return this;
+        }
+        private Builder endDate(LocalDateTime endDate){
+            this.endDate = endDate;
+            return this;
+        }
+        private Builder priority(int priority){
+            this.priority=priority;
+            return this;
+        }
+        private Builder userId(String userId){
+            this.userId=userId;
+            return this;
+        }
+        private Task build(){
+            return new Task(this);
+        }
+    }
 }

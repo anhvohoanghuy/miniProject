@@ -2,23 +2,21 @@ package com.example.demo.controller;
 
 import com.example.demo.dto.TaskDto;
 import com.example.demo.model.Task;
-import com.example.demo.repository.ITaskRepository;
-import com.example.demo.service.TaskService;
+import com.example.demo.service.TaskService.ITaskService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("api/task")
 @RequiredArgsConstructor
 public class TaskController {
-    @Autowired
-    private TaskService taskService;
+
+    private final ITaskService taskService;
 
     @PostMapping
     public ResponseEntity<Task> createTask(@RequestBody TaskDto task) {
